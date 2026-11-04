@@ -1,42 +1,36 @@
-from app.config import (
-    WATCHLIST,
-    TIMEFRAME,
-    INITIAL_CAPITAL
-)
-
+from app.config import WATCHLIST, TIMEFRAME, INITIAL_CAPITAL
 from app.binance_client import get_market_data
-from app.indicators import calculate_indicators
-from app.strategy import generate_signal
+from app.strategy import analyze_market
 
 
 def run_analysis():
     balance = INITIAL_CAPITAL
 
+    print("================================")
     print("BMD AI TRADING AGENT")
-    print("Mode: DEMO")
-    print("Market: BINANCE SPOT")
+    print("MODE: DEMO")
+    print("MARKET: BINANCE SPOT")
+    print("================================")
 
     for symbol in WATCHLIST:
         df = get_market_data(symbol, TIMEFRAME)
 
-        if df is None:
+        if df is None or len(df) < 30:
+            print(symbol, "WAIT - No data")
             continue
 
-        df = calculate_indicators(df)
+        prices = df["close"].astype(float).tolist()
 
-        if df is None:
-            continue
+        result = analyze_market(prices)
 
-        signal = generate_signal(df)
+        price = prices[-1]
 
-        price = float(df["close"].iloc[-1])
-
-        print(
-            f"{symbol} | "
-            f"Price: {price} | "
-            f"Signal: {signal} | "
-            f"Balance: {balance} USDT"
-        )
+        print("--------------------------------")
+        print("COIN:", symbol)
+        print("PRICE:", price)
+        print("SIGNAL:", result["signal"])
+        print("REASON:", result["reason"])
+        print("BALANCE:", balance, "USDT")
 
 
 if __name__ == "__main__":
